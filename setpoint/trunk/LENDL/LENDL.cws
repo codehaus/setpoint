@@ -1,0 +1,33 @@
+//------------------------------------------------------------------
+//                    LENDL .lendl-to-.cs compiler
+//------------------------------------------------------------------
+
+// Parsing
+forfile sourceFile in "*.lendl" {
+	parseAsBNF("LENDL.cwp", project, sourceFile);
+}
+
+function secondPass(){	
+	foreach advice in project.advices
+		ref advice.aspect = project.aspects[advice.aspectName];	
+}
+
+secondPass();
+
+function addOntologies(){
+	local files;
+	local owl;
+	scanFiles(files, ".", "*.owl", false);	
+	insert project.ontologies;
+	foreach file in files {
+	    owl = loadFile(file);	
+	    insert project.ontologies[file].name = file;
+	    insert project.ontologies[file].owlModel = owl;
+	}
+}
+addOntologies();
+
+
+// Code Generation
+generate("LENDL.cwt", project, "lendl/LENDLConfig.cs");
+

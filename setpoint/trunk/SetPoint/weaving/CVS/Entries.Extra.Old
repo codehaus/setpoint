@@ -1,0 +1,16 @@
+/Advice.cs////
+/AdviceBuilder.cs////
+/AdviceMap.cs////
+/ChainWeavingPolicy.cs////
+/DefaultSingletonAspectFactory.cs////
+/Event.cs////
+/IAdvice.cs////
+/IAspect.cs////
+/IAspectFactory.cs////
+/ITrigger.cs////
+/IWeavingPolicy.cs////
+/NeutralWeavingPolicy.cs////
+/Trigger.cs////
+/TriggerSet.cs////
+/Weaver.cs////
+/WeavingPolicyBroker.cs////

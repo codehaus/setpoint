@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<InferenceRules>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:type>} <rdf:type> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:subject>} <rdf:type> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:predicate>} <rdf:type> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:object>} <rdf:type> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:first>} <rdf:type> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:rest>} <rdf:type> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:value>} <rdf:type> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:nil>} <rdf:type> {<rdf:List>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:comment>} <rdf:type> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:isDefinedBy>} <rdf:type> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:member>} <rdf:type> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:label>} <rdf:type> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:Alt>} <rdf:type> {<rdfs:Class>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:Bag>} <rdf:type> {<rdfs:Class>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:Seq>} <rdf:type> {<rdfs:Class>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:ContainerMembershipProperty>} <rdf:type> {<rdfs:Class>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:XMLLiteral>} <rdf:type> {<rdfs:Class>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:subClassOf>} <rdf:type> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:type>} <rdfs:domain> {<rdfs:Resource>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:domain>} <rdfs:domain> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:range>} <rdfs:domain> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:subPropertyOf>} <rdfs:domain> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:subClassOf>} <rdfs:domain> {<rdfs:Class>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:subject>} <rdfs:domain> {<rdf:Statement>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:predicate>} <rdfs:domain> {<rdf:Statement>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:object>} <rdfs:domain> {<rdf:Statement>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:member>} <rdfs:domain> {<rdfs:Resource>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:first>} <rdfs:domain> {<rdf:List>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:rest>} <rdfs:domain> {<rdf:List>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:isDefinedBy>} <rdfs:domain> {<rdfs:Resource>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:comment>} <rdfs:domain> {<rdfs:Resource>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:label>} <rdfs:domain> {<rdfs:Resource>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:value>} <rdfs:domain> {<rdfs:Resource>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:seeAlso>} <rdfs:domain> {<rdfs:Resource>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:type>} <rdfs:range> {<rdfs:Class>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:domain>} <rdfs:range> {<rdfs:Class>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:range>} <rdfs:range> {<rdfs:Class>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:subPropertyOf>} <rdfs:range> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:subClassOf>} <rdfs:range> {<rdfs:Class>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:subject>} <rdfs:range> {<rdfs:Resource>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:predicate>} <rdfs:range> {<rdfs:Resource>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:object>} <rdfs:range> {<rdfs:Resource>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:member>} <rdfs:range> {<rdfs:Resource>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:first>} <rdfs:range> {<rdfs:Resource>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:rest>} <rdfs:range> {<rdf:List>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:seeAlso>} <rdfs:range> {<rdfs:Resource>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:comment>} <rdfs:range> {<rdfs:Literal>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:label>} <rdfs:range> {<rdfs:Literal>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:value>} <rdfs:range> {<rdfs:Resource>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:isDefinedBy>} <rdfs:range> {<rdfs:Resource>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:Alt>} <rdfs:subClassOf> {<rdfs:Container>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:Bag>} <rdfs:subClassOf> {<rdfs:Container>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:Seq>} <rdfs:subClassOf> {<rdfs:Container>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:ContainerMembershipProperty>} <rdfs:subClassOf> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:isDefinedBy>} <rdfs:subPropertyOf> {<rdfs:seeAlso>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:ContainerMembershipProperty>} <rdfs:subClassOf> {<rdf:Property>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:XMLLiteral>} <rdf:type> {<rdfs:Datatype>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdf:XMLLiteral>} <rdfs:subClassOf> {<rdfs:Literal>}
+	]]></axiom>
+	<axiom><![CDATA[
+			CONSTRUCT {<rdfs:Datatype>} <rdfs:subClassOf> {<rdfs:Class>}
+	]]></axiom>
+	<rule number="1"><![CDATA[
+			CONSTRUCT {aaa} <rdf:type> {<rdf:Property>}
+			FROM {xxx} aaa {yyy}
+	]]></rule>
+	<rule number="2"><![CDATA[
+			CONSTRUCT {xxx} <rdf:type> {zzz}
+			FROM {xxx} aaa {yyy},
+	 			    {aaa} <rdfs:domain> {zzz}
+	]]></rule>
+	<rule number="3"><![CDATA[
+			CONSTRUCT {uuu} <rdf:type> {zzz}
+			FROM {xxx} aaa {uuu},
+	 			    {aaa} <rdfs:range> {zzz}
+	]]></rule>
+	<rule number="4a"><![CDATA[
+			CONSTRUCT {xxx} <rdf:type> {rdfs:Resource}
+			FROM {xxx} aaa {yyy}
+	]]></rule>
+	<rule number="4b"><![CDATA[
+			CONSTRUCT {uuu} <rdf:type> {rdfs:Resource}
+			FROM {xxx} aaa {uuu}
+	]]></rule>
+	<rule number="5"><![CDATA[
+			CONSTRUCT {aaa} <rdfs:subPropertyOf> {ccc}
+			FROM {aaa} <rdfs:subPropertyOf> {bbb},
+	 			    {bbb} <rdfs:subPropertyOf> {ccc}
+	]]></rule>
+	<rule number="6"><![CDATA[
+			CONSTRUCT {xxx} <rdfs:subPropertyOf> {xxx}
+			FROM {xxx} <rdf:type> {rdf:Property}
+	]]></rule>
+	<rule number="7"><![CDATA[
+			CONSTRUCT {xxx} bbb {yyy}
+			FROM {xxx} aaa {yyy},
+				    {aaa} <rdfs:subPropertyOf> {bbb}
+	]]></rule>
+	<rule number="8"><![CDATA[
+			CONSTRUCT {xxx} <rdfs:subClassOf> {<rdfs:Resource>}
+			FROM {xxx} <rdf:type> {<rdfs:Class>}
+	]]></rule>
+	<rule><![CDATA[
+			CONSTRUCT {aaa} <rdf:type> {yyy}
+			FROM {aaa} <rdf:type> {xxx},
+	 			    {xxx} <rdfs:subClassOf> {yyy}
+	]]></rule>
+	<rule><![CDATA[
+			CONSTRUCT {xxx} <rdfs:subClassOf> {xxx}
+			FROM {xxx} <rdf:type> {<rdfs:Class>}
+	]]></rule>
+	<rule><![CDATA[
+			CONSTRUCT {xxx} <rdfs:subClassOf> {zzz}
+			FROM {xxx} <rdfs:subClassOf> {yyy},
+				    {yyy} <rdfs:subClassOf> {zzz}	 			    
+	]]></rule>
+	<rule><![CDATA[
+			CONSTRUCT {xxx} <rdfs:subPropertyOf> {<rdfs:member>}
+			FROM {xxx} <rdf:type> {<rdfs:ContainerMembershipProperty>}				    	 			    
+	]]></rule>
+	<rule><![CDATA[
+			CONSTRUCT {xxx} <rdfs:subClassOf> {<rdfs:Literal>}
+			FROM {xxx} <rdf:type> {<rdfs:DataType>}				    	 			    
+	]]></rule>
+	<rule><![CDATA[
+			CONSTRUCT {B} <!semantics://programElements/objectOriented/CTS#hasAnnotation> {X}
+			FROM {A} <!semantics://programElements/objectOriented/CTS#hasProgramElement> {B} ,
+				   {A} <!semantics://programElements/objectOriented/CTS#hasAnnotation> {X} 
+	]]></rule>
+	<rule><![CDATA[
+			CONSTRUCT {A} <!semantics://programElements/objectOriented/CTS#hasAnnotation> {Y}
+			FROM {X} <rdfs:subClassOf> {Y} ,
+				   {A} <!semantics://programElements/objectOriented/CTS#hasAnnotation> {X} 
+	]]></rule>
+</InferenceRules>

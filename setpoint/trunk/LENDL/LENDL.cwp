@@ -1,0 +1,155 @@
+//------------------------------------------------------------------------
+// EBNF script for parsing LENDL
+//
+// Called by "LENDL.cws".
+//
+// Logical structure of the parse tree:
+//   |
+//   +- pointcuts: array of pointcuts, indexed by pointcut name
+//      |
+//      +- name: pointcut name,
+//      |
+//      +- attributes: array of attributes, indexed by their name
+//         |
+//         +- name: attribute's name
+//         |
+//         +- aggregate (optional): 'true' if the attribute points to
+//         |                        object(s) that belong(s) to the class
+//         +- type: type specifier
+//            |
+//            +- name: "double", "string" or class name
+//            |
+//            +- isArray (optional): 'true' if the attribute is an array
+//------------------------------------------------------------------------
+LENDL    ::= #continue #ignore(C++) LENDL_body #empty;
+
+LENDL_body ::= =>{insert this.aliases["rdf"] = "http://www.w3.org/1999/02/22-rdf-syntax-ns";
+				  insert this.aliases["rdfs"] = "http://www.w3.org/2000/01/rdf-schema";
+				  insert this.aliases["owl"] = "http://www.w3.org/2002/07/owl";
+				  insert this.aliases["cts"] = "semantics://programElements/objectOriented/CTS";}
+[ALIAS]*[POINTCUT|ADVICE|ASPECT|RULE]*;
+
+///////////////////////////// ALIAS /////////////////////////////////////////
+ALIAS ::= "declare " #readIdentifier:sAlias #continue "alias " REAL_URI:sAliasUri #continue ";"
+					=>{ insert this.aliases[sAlias] = sAliasUri; };
+					
+///////////////////////////// POINTCUT /////////////////////////////////////////
+POINTCUT    ::= "pointcut" #continue #readIdentifier:sPointCutName
+			=>{ 			     
+			     if this.pointcuts.findElement(sPointCutName) error("pointcut '" + sPointCutName + "' is already defined");
+			     insert this.pointcuts[sPointCutName].name = sPointCutName;			     
+			     insert this.pointcuts[sPointCutName].SeRQLFROM = "";
+			  }
+			'{'
+				[pointcutStatement(this.pointcuts[sPointCutName])]*
+				=> set this.pointcuts[sPointCutName].SeRQLFROM = leftString(this.pointcuts[sPointCutName].SeRQLFROM, sub(lengthString(this.pointcuts[sPointCutName].SeRQLFROM),1));				
+			'}';
+
+function formatUri(originalToken : value) {    
+    local sResult;
+    switch(originalToken){
+    	case "is" : set sResult = "<!semantics://programElements/objectOriented/CTS#hasAnnotation>"; break;
+    	default : local i = lengthString(originalToken); 
+    			  decrement(i); decrement(i);     			
+    			  local uri;  
+    			  set uri =  midString(originalToken, 1, i);
+    			  if  findString(uri, ":") = -1
+    			  {
+    				local alias = midString(uri, 0, findString(uri, "#"));    				
+    				if !this.aliases.findElement(alias) error("alias '" + alias+ "' is not defined");    				
+    				set uri = this.aliases[alias] + rightString(uri, sub(lengthString(uri), findString(uri, "#")));
+    			  }
+    			  set sResult = "<!" + uri + ">"; 
+    }
+    return sResult;
+}
+
+function getPathElement(aToken : value, aTokenPosition : value) {    
+    local sResult;
+    if mod(aTokenPosition,2)=0
+    	set sResult = aToken;
+    else 
+    	set sResult = '{' + aToken + '}';
+    return sResult;
+}
+
+
+pointcutStatement(aPointcut : node) ::= variableKeyword(aPointcut, 1):aSubject #continue messageKeyword(aPointcut, 2):aPredicate #continue pointcutRDFResource(aPointcut, 3):anObject ';'					
+					=> trim(aPointcut.SeRQLFROM);
+					=> set aPointcut.SeRQLFROM += ',';;					
+
+variableKeyword(aPointcut : node, tokenPosition : value)  ::= ["sender"|"receiver"|"message"]:aToken
+				       => set aPointcut.SeRQLFROM += getPathElement(aToken, tokenPosition) + ' ';;
+				       
+messageKeyword(aPointcut : node, tokenPosition : value)  ::= URI:anUri
+				       => set aPointcut.SeRQLFROM += getPathElement(formatUri(anUri), tokenPosition) + ' ';;
+				
+pointcutRDFResource(aPointcut : node, tokenPosition : value) ::= URI:anUri
+	=> set aPointcut.SeRQLFROM += getPathElement(formatUri(anUri), tokenPosition) + ' ';;			
+
+///////////////////////////// ADVICE /////////////////////////////////////////
+ADVICE    ::= "advice" #readIdentifier:sAdviceName ":" #readIdentifier:sAspectName 
+				 	=>{ 					     							
+					     if this.advices.findElement(sAdviceName) error("advice '" + sAdviceName + "' is already defined");
+					     insert this.advices[sAdviceName].name = sAdviceName;					     
+					     insert this.advices[sAdviceName].triggers;
+					     insert this.advices[sAdviceName].aspectName = sAspectName;
+					  }
+					'{' #continue
+						[trigger(this.advices[sAdviceName])]*
+					'}';
+
+trigger(anAdvice : node)     ::=  "trigger" => pushItem anAdvice.triggers;=> localref aTrigger = anAdvice.triggers#back;=>insert aTrigger.pointCutNames;
+					#continue #readIdentifier:aTrigger.eventName WHEN:aTrigger.when
+					'{' #readIdentifier:sPointCutName => pushItem aTrigger.pointCutNames = sPointCutName;
+					       [',' #readIdentifier:sPointCutName => pushItem aTrigger.pointCutNames = sPointCutName;]* '}' ';';
+
+
+WHEN			     ::= ["after"|"before"];
+///////////////////////////// ASPECT /////////////////////////////////////////
+ASPECT    ::= "aspect" #readIdentifier:sAspectName #continue ["builtby" #readIdentifier:sFactoryName]?
+					=>{					   
+					    if this.aspects.findElement(sAspectName) error("aspect '" + sAspectName + "' is already defined");
+					    insert this.aspects[sAspectName].name = sAspectName;					   
+					    insert this.aspects[sAspectName].factoryName = sFactoryName;
+					    insert this.aspects[sAspectName].events;
+					  }
+					'{' #continue
+						[event(this.aspects[sAspectName])]*
+					'}';				
+				
+event(anAspect : node)     ::=  "event" => pushItem anAspect.events;=> localref anEvent = anAspect.events#back;
+					#continue #readIdentifier:anEvent.eventName ';';
+					
+///////////////////////////// RULES /////////////////////////////////////////
+RULE ::= "rule" #readIdentifier:sRuleName 
+					=>{					   					    
+					    insert this.rules[sRuleName].name = sRuleName;					    					    
+					    insert this.rules[sRuleName].consequence = "";
+					    insert this.rules[sRuleName].premises;					    
+					  }
+					'{' #continue	
+						[inference(this.rules[sRuleName])]*					
+					'}';				
+				
+inference(aRule : node) ::=  "infer" #continue consequence(aRule) #continue 
+							 "when" #continue premise(aRule, "") #continue 
+							 ["and" #continue premise(aRule, ", ")]* #continue ';';							 
+
+consequence(aRule : node) ::= uriOrVariable(aRule.consequence, 1, ""):aSubject #continue uriOrVariable(aRule.consequence, 2, " "):aPredicate #continue uriOrVariable(aRule.consequence, 3, " ");
+premise(aRule : node, beginChar:value) ::= uriOrVariable(aRule.premises, 1, beginChar) #continue uriOrVariable(aRule.premises, 2, " ") #continue uriOrVariable(aRule.premises, 3, " ");
+
+uriOrVariable(resourceToFill:node, position:value, beginChar:value) ::= [ALPHA|URI:anUri]:aResource => {
+						if (anUri != "") 
+							set aResource = formatUri(anUri);
+						resourceToFill += beginChar + getPathElement(aResource, position); 
+					};
+
+///////////////////////////// MISC /////////////////////////////////////////
+URI ::= #!ignore ['[' #continue ID["://"URI_ATOM['/'URI_ATOM]*]?'#'URI_ATOM:anUri #continue ']'|"is"];			
+REAL_URI ::= #!ignore ALPHA"://"URI_ATOM['/'URI_ATOM]*;
+URI_ATOM ::= #!ignore ['a'..'z'|'A'..'Z'|'.'|'_']+; 
+ALPHA ::= #!ignore ['a'..'z'|'A'..'Z']+;
+ID ::= #!ignore ['a'..'z'|'A'..'Z'|'_']['a'..'z'|'A'..'Z'|'_'|'0'..'9']*;
+
+

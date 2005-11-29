@@ -1,0 +1,105 @@
+using System;
+using setPoint.configuration;
+using setPoint.semantics;
+using setPoint.weaving;
+using org.openrdf.sesame.sail.query;
+
+namespace LENDLConfiguration{
+	[Serializable]
+	public class LENDLConfig:IConfiguration{
+
+		private PointCutMap _pointcuts = null;
+		private Advice[] _advices = null;
+		private Ontology[] _ontologies = null;
+		private Rule[] _rules = null;
+		
+		#region IConfiguration Members
+		public PointCutMap pointcuts{
+			get{
+				if(this._pointcuts == null)
+					this._pointcuts = this.createPointcuts();
+				return this._pointcuts;
+			}
+		}
+		
+		public Advice[] advices{
+			get{
+				if(this._advices == null)
+					this._advices = this.createAdvices();
+				return this._advices;
+			}
+		}
+			
+		public Ontology[] ontologies{
+			get{
+				if(this._ontologies == null)
+					this._ontologies = this.createOntologies();
+				return this._ontologies;
+			   }
+		}
+		
+		public Rule[] rules{
+			get{
+				if(this._rules == null)
+					this._rules = this.createRules();
+				return this._rules;
+			   }
+		}
+		#endregion
+		
+		#region private pointcut methods
+		private PointCutMap createPointcuts(){
+			PointCutMap pointcuts = new PointCutMap();
+			///////////// BEGIN GENERATED CODE //////////
+		@foreach pointcut in this.pointcuts{@
+			pointcuts.Add("@pointcut.name@",
+				new PointCut("@pointcut.SeRQLFROM@"));
+		@}@
+			///////////// END GENERATED CODE //////////
+			
+			return pointcuts;
+		}		
+		#endregion
+		
+		#region private advice methods
+		private Advice[] createAdvices(){
+			Advice[] advices = new Advice[@getArraySize(this.advices)@];			
+			AdviceBuilder builder = new AdviceBuilder();
+			///////////// BEGIN GENERATED CODE //////////
+		@local i = 0;foreach advice in this.advices{@
+			builder.startBuildingAdviceUsing(
+				@if advice.aspect.factoryName{@new @advice.aspect.factoryName@());@}else@new DefaultAspectFactory(typeof(@advice.aspect.name@)));
+			@foreach trigger in advice.triggers{@
+				builder.start@trigger.when@TriggerDefinition("@trigger.eventName@");
+				@foreach pointCutName in trigger.pointCutNames{@builder.assignPointcutToCurrentTrigger(this.pointcuts["@pointCutName@"]);@}@
+				builder.endTriggerDefinition();
+			@}@
+			advices[@i@] = (builder.getBuiltAdvice());@set i = increment(i);@
+		@}@
+			///////////// END GENERATED CODE //////////						
+			return advices;
+		}
+		#endregion
+		
+		#region private ontologies methods
+		private Ontology[] createOntologies(){
+			Ontology[] ontologies = new Ontology[@getArraySize(this.ontologies)@];						
+		@local j=0; foreach ontology in this.ontologies{@			
+			ontologies[@j@] = new Ontology("@ontology.name@", @byteToChar(40)@"@replaceString("\"", "\"\"", ontology.owlModel)@"); 			
+		@set j = increment(j);}@			
+			
+			return ontologies;
+		}		
+		#endregion
+		
+		#region private inference rules methods
+		private Rule[] createRules(){
+			Rule[] rules = new Rule[@getArraySize(this.rules)@];						
+		@local k=0; foreach rule in this.rules{@			
+			rules[@k@] = new Rule("@rule.premises@", "@rule.consequence@"); 
+		@set k = increment(k);}@						
+			return rules;
+		}		
+		#endregion
+	}
+}
