@@ -1,0 +1,26 @@
+Bugs en Cecil:
+=============
+
+- Branches fuera del metodo, overflow en operador offset cuando 
+se agregan muchas instrucciones ente el branch y el destino.
+(Como alternativa se reepmplazan todos los branchas cortos por largos, 
+hasta que el bug sea corregiso en Cecil) 
+
+- En los arrays de Value Types devuelve que el array es un Value Type.
+
+Bugs que no se de donde vienen:
+===============================
+
+- Cuando preweveo un programa con ventanas aparecen instrucciones
+"box 0" donde deberia ir "box system.Int32". tambien obtuve este 
+comportamiento con el dotSenku.dll
+Probar de nuevo esto cuando jb corrija los errores de arriba.
+
+
+TODO:
+=====
+
+- Cuando el semanticator este bien probado cambiar el metodo
+que genera la uri del metodo para que incluya los tipos de 
+los paramatros, para poder diferenciar los metodos cuando hay overloading.
+(ver si esto afecta a SetPoint, consultarlo con Alan).
