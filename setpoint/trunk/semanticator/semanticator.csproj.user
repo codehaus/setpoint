@@ -1,7 +1,7 @@
 <VisualStudioProject>
     <CSHARP LastOpenVersion = "7.10.3077" >
         <Build>
-            <Settings ReferencePath = "D:\Facultad\tesis\src\Implementacion\lib\;C:\Rubén\Tesis\Implementacion\lib\;C:\Documents and Settings\dtubello\Proyecto SetPoint\distributions\SetPoint-src-0.2\lib\" >
+            <Settings ReferencePath = "D:\Facultad\tesis\src\Implementacion\lib\;C:\Rubén\Tesis\Implementacion\lib\;C:\Documents and Settings\dtubello\Proyecto SetPoint\distributions\SetPoint-src-0.2\lib\;C:\Develop\SetPoint_SVN_codehaus\lib\" >
                 <Config
                     Name = "Debug"
                     EnableASPDebugging = "false"

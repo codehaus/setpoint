@@ -88,16 +88,15 @@
                     Private = "False"
                 />
                 <Reference
-                    Name = "PERWAPI"
-                    AssemblyName = "PERWAPI"
-                    HintPath = "..\lib\PERWAPI.dll"
-                    Private = "False"
-                />
-                <Reference
                     Name = "sesame"
                     AssemblyName = "sesame"
                     HintPath = "..\lib\sesame.dll"
                     Private = "False"
+                />
+                <Reference
+                    Name = "Mono.Cecil"
+                    AssemblyName = "Mono.Cecil"
+                    HintPath = "..\lib\Mono.Cecil.dll"
                 />
             </References>
         </Build>
