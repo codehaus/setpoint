@@ -1,15 +1,14 @@
-using System.Collections;
-using PERWAPI;
+using Mono.Cecil.Cil;
 
-namespace preWeaverPERWAPI.CodeInjection {
+namespace preWeaverCecil.CodeInjection {
 	/// <summary>
 	/// Neutral injector - returns the very same instruction it receives
 	/// </summary>
 	public class NeutralCodeInjector : IMessageInterceptionCodeInjector {
-		public void interceptMessageSentBy(Instr originalInstruction, MethodToBeInstrumented methodToBeInstrumented) {			
+		public void interceptMessageSentBy(Instruction originalInstruction, MethodToBeInstrumented methodToBeInstrumented) {			
 		}
 
-		public bool isInterceptorFor(Instr instruction) {
+		public bool isInterceptorFor(Instruction instruction) {
 			return true;
 		}
 	}

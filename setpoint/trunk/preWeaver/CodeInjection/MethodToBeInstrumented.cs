@@ -1,69 +1,69 @@
-using PERWAPI;
+using System;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
+//using PERWAPI;
 
-namespace preWeaverPERWAPI.CodeInjection {
+namespace preWeaverCecil.CodeInjection {
 	/// <summary>
 	/// Represents the message where code is to be injected
 	/// </summary>
 	public class MethodToBeInstrumented {
-		private Local _argumentsArray = null, _temporalLocalVariable = null;
+		private VariableDefinition _argumentsArray = null, _temporalLocalVariable = null;
 		private readonly SetPointAssemblyRef _setPointAssemblyRef;
-		private bool _maxStackHasAlreadyGrown;
 
 		public bool isStatic {
-			get { return this._method.isStatic(); }
+			get { return this._method.IsStatic; }
 		}
 
-		private readonly MethodDef _method;
+		private readonly MethodDefinition _method;
 
-		public MethodDef method {
+		public MethodDefinition method {
 			get { return _method; }
 		}
 
-		public int argumentsArray {
+		public VariableDefinition argumentsArray {
 			get {
 				// Lazy initialization
-				if (_argumentsArray == null)
-					this._method.AddLocal(_argumentsArray = new Local("argsArray", MSCorLib.mscorlib.ObjectArray()));
-				return _argumentsArray.GetIndex();
+				if (_argumentsArray == null) {
+					_argumentsArray = newLocalVariable("argsArray", typeof (System.Object[]));
+				}
+				return _argumentsArray;
 			}
 		}
 
-		public int temporalLocalVariable {
+		public VariableDefinition temporalLocalVariable {
 			get {
 				// Lazy initialization
-				if (_temporalLocalVariable == null){
-					this._method.AddLocal(_temporalLocalVariable = new Local("tempVar", MSCorLib.mscorlib.Object()));
+				if (_temporalLocalVariable == null) {
+					_temporalLocalVariable = newLocalVariable("tempVar", typeof (Object));
 				}
-				return _temporalLocalVariable.GetIndex();
+				return _temporalLocalVariable;
 			}
 		}
 
 		public SetPointAssemblyRef setPointAssemblyRef {
-			get {				
-				return _setPointAssemblyRef;
-			}
+			get { return _setPointAssemblyRef; }
 		}
 
-		public Type declaringType {
-			get { return (this._method.GetParent() as Type); }
+		public TypeReference declaringType {
+			get { return this._method.DeclaringType; }
 		}
 
-		public CILInstructions code {
-			get { return this._method.GetCodeBuffer(); }
+		public MethodBody code {
+			get { return this._method.Body; }
 		}
 
-		public void growMaxStack() {
-			if(!this._maxStackHasAlreadyGrown) {
-				// Patch until PERWAPI calculates max stack automatically for fat methods
-				int currentStack = this._method.GetMaxStack()==0 ? 8 : this._method.GetMaxStack();
-				this._method.SetMaxStack(currentStack+5);
-				this._maxStackHasAlreadyGrown = true;
-			}
-		}
-
-		public MethodToBeInstrumented(MethodDef method, SetPointAssemblyRef assemblyRef) {
+		public MethodToBeInstrumented(MethodDefinition method, SetPointAssemblyRef assemblyRef) {
 			this._method = method;
 			this._setPointAssemblyRef = assemblyRef;
+		}
+
+		private VariableDefinition newLocalVariable(string varName, Type varType) {
+			TypeReference typeRef = declaringType.Module.Import(varType);
+			VariableDefinition localVar = new VariableDefinition(varName, method.Body.Variables.Count, _method, typeRef);
+			_method.Body.Variables.Add(localVar);
+			_method.Body.InitLocals = true;
+			return localVar;
 		}
 	}
 }

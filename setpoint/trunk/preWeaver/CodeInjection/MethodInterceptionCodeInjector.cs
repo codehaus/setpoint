@@ -1,43 +1,55 @@
-using System.Reflection.Emit;
-using PERWAPI;
+using System;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
+using preWeaverCecil.CodeInjection.Il;
 
-namespace preWeaverPERWAPI.CodeInjection {
+namespace preWeaverCecil.CodeInjection {
 	/// <summary>
 	/// Code injector that intercepts message sends
 	/// </summary>
 	internal abstract class MethodInterceptionCodeInjector : IMessageInterceptionCodeInjector {
-		protected MethInstr _originalInstruction;
+		protected CallInstruction _originalInstruction;
 		protected MethodToBeInstrumented _methodToBeInstrumented;
-		protected CILInstructions _code;
+		protected MethodCodeBuilder codeBuilder;
+		protected PrimitiveTypeLoadOpCodeChooser opcodeChooser = new PrimitiveTypeLoadOpCodeChooser();
 
 		#region public methods
 
-		public void interceptMessageSentBy(Instr originalInstruction, MethodToBeInstrumented methodToBeInstrumented) {
+		public void interceptMessageSentBy(Instruction originalInstruction, MethodToBeInstrumented methodToBeInstrumented) {
+			/*
+			// This code doesn't make sense
+			  
 			bool baseConstructorAlreadyCalled = false;
 
 			this._methodToBeInstrumented = methodToBeInstrumented;
-			this._originalInstruction = originalInstruction as MethInstr;			
-			
-			if(!this.isStaticReceiver(this._originalInstruction) && this._originalInstruction.GetInstName()=="call")
+			this._originalInstruction = new CallInstruction(originalInstruction);
+
+			if (!this.isStaticReceiver(this._originalInstruction) && this._originalInstruction.OpCode == OpCodes.Call)
 				return;
-			if(!this.isConstructorSender())
+			if (!this.isConstructorSender())
 				this.redirectCallToWeaver();
-			else{
-				if (baseConstructorAlreadyCalled)
-					this.redirectCallToWeaver();
-				else
-					baseConstructorAlreadyCalled = this.isCallToBaseConstructor();
-			}
-				
+			else if (baseConstructorAlreadyCalled)
+				this.redirectCallToWeaver();
+			else
+				baseConstructorAlreadyCalled = this.isCallToBaseConstructor();
+			*/
+
+			this._methodToBeInstrumented = methodToBeInstrumented;
+			this._originalInstruction = new CallInstruction(originalInstruction);
+
+			if(!this.isCallToBaseConstructor()) {
+				this.redirectCallToWeaver();
+			}			
 		}
 
-		public abstract bool isInterceptorFor(Instr instruction);
+		public abstract bool isInterceptorFor(Instruction instruction);
 
 		#endregion
 
 		#region private methods
 
 		#region general call redirection methods
+
 		private void redirectCallToWeaver() {
 			this.initializeCallRedirection();
 
@@ -47,170 +59,221 @@ namespace preWeaverPERWAPI.CodeInjection {
 		}
 
 		private void endCallRedirection() {
-			this._code.EndInsert();
-	
-			this._methodToBeInstrumented.growMaxStack();
+			this.codeBuilder.endInstructionInsertion();
 		}
 
 		private void insertCallRedirection() {
-			this.prepareOriginalMessageArguments();				
-	
+			this.prepareOriginalMessageArguments();
+
 			this.addWeaverReference();
 
 			this.instantiateJoinPoint();
 
 			this.addCallToWeavingMethod();
 
-			if(this.originalCallReturnsValue())				
+			if (this.originalCallReturnsValue())
 				this.castReturnedInstance();
 			else
-				this._code.Inst(Op.pop);
+				codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Pop));
 		}
 
 		private void instantiateJoinPoint() {
 			this.addJoinPointSender();
-			this.addJoinPointReceiver();	
-			this.addJoinPointMessage();	
+			this.addJoinPointReceiver();
+			this.addJoinPointMessage();
 			this.addCallToJoinPointConstructor();
 		}
 
 		private void initializeCallRedirection() {
-			this._code = this._methodToBeInstrumented.code;
-			this._code.ReplaceInstruction(this._originalInstruction.GetPos());
+			this.codeBuilder = new MethodCodeBuilder(_methodToBeInstrumented.code.CilWorker);
+			this.codeBuilder.beginInstructionInsertion(_originalInstruction);
 		}
+
 		#endregion
 
-		protected abstract Type reifiedCallReturningType();
-		protected abstract bool isStaticReceiver(MethInstr instruction);
+		protected abstract TypeReference reifiedCallReturningType();
+		protected abstract bool isStaticReceiver(CallInstruction instruction);
 
 		private void castReturnedInstance() {
-			Type returnedType = this.reifiedCallReturningType();			
-			if(returnedType.mustBeBoxed()){
-				this._code.TypeInst(TypeOp.unbox, returnedType);
+			TypeReference returnedType = reifiedCallReturningType();
+			if (returnedType.IsValueType) {
+				codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Unbox, returnedType));
 				this.loadInstanceForType(returnedType);
+			} else {
+				codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Castclass, returnedType));
 			}
-			else
-				this._code.TypeInst(TypeOp.castclass, returnedType);
 		}
 
-		private void loadInstanceForType(Type returnedType) {
-			if(returnedType is PrimitiveType) {
-				PrimitiveType primitiveReturned = returnedType as PrimitiveType;
-				if(primitiveReturned == PrimitiveType.Int32)
-					this._code.Inst(Op.ldind_i4);
-				else if(primitiveReturned == PrimitiveType.Boolean)
-					this._code.Inst(Op.ldind_i1);					
-			}
+		private void loadInstanceForType(TypeReference returnedType) {
+			if (opcodeChooser.isPrimitiveType(returnedType))
+				codeBuilder.addInstruction(codeBuilder.Code.Create(opcodeChooser.getLoadInstructionOpCode(returnedType)));
 			else
-				this._code.TypeInst(TypeOp.ldobj, returnedType);
+				codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Ldobj, returnedType));
 		}
 
 		private void addJoinPointMessage() {
-			this._code.MethInst(MethodOp.ldtoken, this._originalInstruction.GetMethod());
-			this._code.LoadLocal(this._methodToBeInstrumented.argumentsArray);
-			this._code.MethInst(MethodOp.newobj, this._methodToBeInstrumented.setPointAssemblyRef.methodIMessageConstructor);
+			codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Ldtoken, _originalInstruction.CallMethod));
+			codeBuilder.addInstruction(loadLocalVarInstruction(_methodToBeInstrumented.argumentsArray));
+			MethodReference methodIMessageConstructor = module().Import(_methodToBeInstrumented.setPointAssemblyRef.methodIMessageConstructor);
+			codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Newobj, methodIMessageConstructor));
 		}
 
 		private void addJoinPointSender() {
-			if (this._methodToBeInstrumented.isStatic) {
-				this._code.TypeInst(TypeOp.ldtoken, this._methodToBeInstrumented.declaringType);
-				this._code.MethInst(MethodOp.newobj, this._methodToBeInstrumented.setPointAssemblyRef.classIObjectConstructor);
+			MethodReference constructor;
+			if (_methodToBeInstrumented.isStatic) {
+				codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Ldtoken, _methodToBeInstrumented.declaringType));
+				constructor = module().Import(_methodToBeInstrumented.setPointAssemblyRef.classIObjectConstructor);
+			} else {
+				codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Ldarg_0));
+				constructor = module().Import(_methodToBeInstrumented.setPointAssemblyRef.instanceIObjectConstructor);
 			}
-			else{
-				this._code.LoadArg(0);
-				this._code.MethInst(MethodOp.newobj, this._methodToBeInstrumented.setPointAssemblyRef.instanceIObjectConstructor);
-			}
-		}		
+			codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Newobj, constructor));
+		}
 
 		private void addJoinPointReceiver() {
-			if (this.isStaticReceiver(this._originalInstruction)) {
-				this._code.TypeInst(TypeOp.ldtoken, this._originalInstruction.GetMethod().GetParent() as Type);				
-				this._code.MethInst(MethodOp.newobj, this._methodToBeInstrumented.setPointAssemblyRef.classIObjectConstructor);
-			}
-			else{
-				this._code.LoadLocal(this._methodToBeInstrumented.temporalLocalVariable);
-				this._code.MethInst(MethodOp.newobj, this._methodToBeInstrumented.setPointAssemblyRef.instanceIObjectConstructor);
+			MethodReference constructor;
+			if (isStaticReceiver(_originalInstruction)) {
+				codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Ldtoken, _originalInstruction.CallMethod.DeclaringType));
+				constructor = module().Import(_methodToBeInstrumented.setPointAssemblyRef.classIObjectConstructor);
+				codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Newobj, constructor));
+			} else {
+				codeBuilder.addInstruction(loadLocalVarInstruction(_methodToBeInstrumented.temporalLocalVariable));
+				constructor = module().Import(_methodToBeInstrumented.setPointAssemblyRef.instanceIObjectConstructor);
+				codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Newobj, constructor));
 			}
 		}
 
 		private void addCallToJoinPointConstructor() {
-			this._code.MethInst(MethodOp.newobj, this.joinPointClassToInstantiate());
+			MethodReference joinPointClass = module().Import(joinPointClassToInstantiate());
+			codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Newobj, joinPointClass));
 		}
 
 		private void addCallToWeavingMethod() {
-			this._code.MethInst(MethodOp.call, this._methodToBeInstrumented.setPointAssemblyRef.weavingMethod);
+			MethodReference weavingMethod = module().Import(_methodToBeInstrumented.setPointAssemblyRef.weavingMethod);
+			codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Call, weavingMethod));
 		}
 
 		private void addWeaverReference() {
-			this._code.FieldInst(FieldOp.ldsfld, this._methodToBeInstrumented.setPointAssemblyRef.weaverReference);			
+			FieldReference weaverReference = module().Import(_methodToBeInstrumented.setPointAssemblyRef.weaverReference);
+			codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Ldsfld, weaverReference));
 		}
 
 		private bool isCallToBaseConstructor() {
-			return (this._originalInstruction.GetInstName() == "call") &&
-				((this._originalInstruction.GetMethod().Name() == ".ctor") ||
-					(this._originalInstruction.GetMethod().Name() == ".cctor"));
+			// It should work almost always
+			return isConstructorSender() && 
+				this._originalInstruction.OpCode == OpCodes.Call && 
+				_originalInstruction.isConstructorCall() &&
+				(calledMethodDeclaringType() == callingMethodBaseType());
+		}
+	
+		private TypeReference calledMethodDeclaringType() {
+			return _originalInstruction.CallMethod.DeclaringType;
+		}
+
+		private TypeReference callingMethodBaseType() {
+			return module().Types[_methodToBeInstrumented.declaringType.FullName].BaseType;
 		}
 
 		private bool isConstructorSender() {
-			return ((this._methodToBeInstrumented.method.Name() == ".ctor") ||
-				(this._methodToBeInstrumented.method.Name() == ".cctor"));
+			return this._methodToBeInstrumented.method.IsConstructor;
 		}
 
 		private void prepareOriginalMessageArguments() {
-			// Array length (push it, so that we can create it) 				
-			this._code.IntInst(IntOp.ldc_i4, this._originalInstruction.GetMethod().GetParTypes().Length);
+			// Array length (push it, so that we can create it)
+			codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Ldc_I4, _originalInstruction.CallMethod.Parameters.Count));
 
 			// Let's construct the array...(defined of type System.Object)
-			this._code.TypeInst(TypeOp.newarr, MSCorLib.mscorlib.Object());
+			codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Newarr, module().Import(typeof (Object))));
 
 			// Reference the constructed array
-			this._code.StoreLocal(this._methodToBeInstrumented.argumentsArray);
+			codeBuilder.addInstruction(storeLocalVarInstruction(_methodToBeInstrumented.argumentsArray));
 
 			// Now it's time to store all those already-pushed arguments in the array
 			// We need an index, so that the array can be accessed
-			for (int i = this._originalInstruction.GetMethod().GetParTypes().Length - 1; i >= 0; i--) {
-				Type argumentType = this._originalInstruction.GetMethod().GetParTypes()[i];
+			for (int i = this._originalInstruction.CallMethod.Parameters.Count - 1; i >= 0; i--) {
+				TypeReference argumentType = this._originalInstruction.CallMethod.Parameters[i].ParameterType;
 
 				// This argument is now on top of the stack...we should store it somewhere in the meantime...
-				if (argumentType.mustBeBoxed())
-					this._code.TypeInst(TypeOp.box, argumentType);
-				this._code.StoreLocal(this._methodToBeInstrumented.temporalLocalVariable);
+				if (argumentType.IsValueType)
+					codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Box, argumentType));
+
+				codeBuilder.addInstruction(storeLocalVarInstruction(_methodToBeInstrumented.temporalLocalVariable));
 
 				// We need to push a reference to the array, so that the CLR knows who is it that we're talking about
-				this._code.LoadLocal(this._methodToBeInstrumented.argumentsArray);
+				codeBuilder.addInstruction(loadLocalVarInstruction(_methodToBeInstrumented.argumentsArray));
 
 				// In what part of the array are we storing the argument? - The index must be pushed
-				this._code.IntInst(IntOp.ldc_i4, i);
+				codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Ldc_I4, i));
 
 				// What are we storing? - Push once again the i-th argument (arguments are originally pushed in order before a method call, 
 				//  so we must carefully store them in reverse order this time)
-				this._code.LoadLocal(this._methodToBeInstrumented.temporalLocalVariable);
+				codeBuilder.addInstruction(loadLocalVarInstruction(_methodToBeInstrumented.temporalLocalVariable));
 
 				// We finally store the i-th argument in the array
-				this._code.Inst(Op.stelem_ref);
+				codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Stelem_Ref));
 			}
 
 			// If the original instruction was an instance call, the "receiver" is now on top of the stack
-			if(!this.isStaticReceiver(this._originalInstruction)){
-				Type receiverType = this._originalInstruction.GetMethod().GetParent() as Type;
+			if (!this.isStaticReceiver(this._originalInstruction)) {
+				TypeReference receiverType = _originalInstruction.CallMethod.DeclaringType;
 				// If the reciver is a value type, then there's a pointer to it on the stack
-				if(receiverType.mustBeBoxed()) {
+				if (receiverType.IsValueType) { //if (receiverType.mustBeBoxed()) {
 					// We first turn the pointer into the actual value
 					this.loadInstanceForType(receiverType);
 					// Then it needs to be boxed, so that we can store in our local var
-					this._code.TypeInst(TypeOp.box, receiverType);
+					codeBuilder.addInstruction(codeBuilder.Code.Create(OpCodes.Box, receiverType));
 				}
 				// We store it in a local variable, so that it can later be retrieved
-				this._code.StoreLocal(this._methodToBeInstrumented.temporalLocalVariable);
+				codeBuilder.addInstruction(storeLocalVarInstruction(_methodToBeInstrumented.temporalLocalVariable));
 			}
 		}
 
-		protected abstract MethodRef joinPointClassToInstantiate();
+		private ModuleDefinition module() {
+			return _methodToBeInstrumented.declaringType.Module;
+		}
 
-		protected abstract bool originalCallReturnsValue();		
-	
+		private Instruction storeLocalVarInstruction(VariableDefinition variableDefinition) {
+			// Not very nice...
+			switch (variableDefinition.Index) {
+				case 0:
+					return codeBuilder.Code.Create(OpCodes.Stloc_0);
+				case 1:
+					return codeBuilder.Code.Create(OpCodes.Stloc_1);
+				case 2:
+					return codeBuilder.Code.Create(OpCodes.Stloc_2);
+				case 3:
+					return codeBuilder.Code.Create(OpCodes.Stloc_3);
+				default:
+					if (variableDefinition.Index < Byte.MaxValue)
+						return codeBuilder.Code.Create(OpCodes.Stloc_S, variableDefinition);
+					else
+						return codeBuilder.Code.Create(OpCodes.Stloc, variableDefinition);
+			}
+		}
 
-		#endregion		
+		private Instruction loadLocalVarInstruction(VariableDefinition variableDefinition) {
+			switch (variableDefinition.Index) {
+				case 0:
+					return codeBuilder.Code.Create(OpCodes.Ldloc_0);
+				case 1:
+					return codeBuilder.Code.Create(OpCodes.Ldloc_1);
+				case 2:
+					return codeBuilder.Code.Create(OpCodes.Ldloc_2);
+				case 3:
+					return codeBuilder.Code.Create(OpCodes.Ldloc_3);
+				default:
+					if (variableDefinition.Index < Byte.MaxValue)
+						return codeBuilder.Code.Create(OpCodes.Ldloc_S, variableDefinition);
+					else
+						return codeBuilder.Code.Create(OpCodes.Ldloc, variableDefinition);
+			}
+		}
+
+		protected abstract MethodReference joinPointClassToInstantiate();
+
+		protected abstract bool originalCallReturnsValue();
+
+		#endregion
 	}
 
 }

@@ -1,25 +1,26 @@
-using System.Reflection.Emit;
-using PERWAPI;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
+using preWeaverCecil.CodeInjection.Il;
 
-namespace preWeaverPERWAPI.CodeInjection {
+namespace preWeaverCecil.CodeInjection {
 	/// <summary>
 	/// Summary description for NewObjCodeInjector.
 	/// </summary>
 	internal class NewObjCodeInjector : MethodInterceptionCodeInjector {
-		public override bool isInterceptorFor(Instr instruction) {
-			return instruction.GetInstName() ==  "newobj";
+		public override bool isInterceptorFor(Instruction instruction) {
+			return instruction.OpCode == OpCodes.Newobj;
 		}
 
-		protected override MethodRef joinPointClassToInstantiate() {
+		protected override MethodReference joinPointClassToInstantiate() {
 			return this._methodToBeInstrumented.setPointAssemblyRef.constructorJoinPointConstructor;
 		}
 
-		protected override bool isStaticReceiver(MethInstr instruction) {
+		protected override bool isStaticReceiver(CallInstruction instruction) {
 			return true;
 		}
 
-		protected override Type reifiedCallReturningType(){
-			return this._originalInstruction.GetMethod().GetParent() as Type;			
+		protected override TypeReference reifiedCallReturningType(){
+			return this._originalInstruction.CallMethod.DeclaringType;			
 		}
 
 		protected override bool originalCallReturnsValue() {

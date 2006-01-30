@@ -2,13 +2,10 @@ using System;
 using System.IO;
 using NAnt.Core;
 using NAnt.Core.Attributes;
-using preWeaverPERWAPI;
+using preWeaverCecil;
 using semanticator;
 
 namespace SetPointTask {
-		/// <summary>
-		/// Summary description for Class1.
-		/// </summary>
 		[TaskName("simAddin")]
 		public class SimAddinTask : Task {
 			String inputFile;

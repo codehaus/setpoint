@@ -1,6 +1,7 @@
-using PERWAPI;
+using System;
+using Mono.Cecil.Cil;
 
-namespace preWeaverPERWAPI.CodeInjection {
+namespace preWeaverCecil.CodeInjection {
 	/// <summary>
 	/// Intercepts evey single message send 
 	/// </summary>
@@ -9,20 +10,25 @@ namespace preWeaverPERWAPI.CodeInjection {
 		private CodeInjectorChooser chooser = new CodeInjectorChooser();
 
 		internal void processMethodBody(MethodToBeInstrumented methodToBeInstrumented) {
-			CILInstructions code = methodToBeInstrumented.code;
-			CILInstruction originalInstruction;
-			
-			if (code==null) // It's an abstract method
-				return;
-			while ((originalInstruction = code.GetNextInstruction() as CILInstruction) != null)
-				if(originalInstruction is Instr)
-					this.interceptMessageSentBy(originalInstruction as Instr, methodToBeInstrumented);
+			if (this.hasEmptyBody(methodToBeInstrumented)) return;
+
+			Instruction originalInstruction = methodToBeInstrumented.code.Instructions[0];
+			while (originalInstruction != null) {
+				this.interceptMessageSentBy(originalInstruction, methodToBeInstrumented);
+				originalInstruction = originalInstruction.Next;
+			}
 		}
 
 		#region private (refactored) methods		
 
-		private void interceptMessageSentBy(Instr instruction, MethodToBeInstrumented message) {
+		private void interceptMessageSentBy(Instruction instruction, MethodToBeInstrumented message) {
 			this.chooser.codeInjectorFor(instruction).interceptMessageSentBy(instruction, message);
+		}
+
+		public bool hasEmptyBody(MethodToBeInstrumented methodToBeInstrumented) {
+			return (methodToBeInstrumented.method.IsAbstract ||
+				methodToBeInstrumented.code == null ||
+				methodToBeInstrumented.code.Instructions.Count == 0);
 		}
 
 		#endregion

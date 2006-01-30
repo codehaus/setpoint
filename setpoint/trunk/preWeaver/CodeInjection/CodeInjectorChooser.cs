@@ -1,8 +1,8 @@
 using System;
 using System.Collections;
-using PERWAPI;
+using Mono.Cecil.Cil;
 
-namespace preWeaverPERWAPI.CodeInjection {
+namespace preWeaverCecil.CodeInjection {
 	/// <summary>
 	/// Chooses a suitable injector for a given instruction
 	/// </summary>
@@ -26,7 +26,7 @@ namespace preWeaverPERWAPI.CodeInjection {
 		/// <summary>
 		/// Chooses a suitable injector for a given instruction
 		/// </summary>
-		public IMessageInterceptionCodeInjector codeInjectorFor(Instr instruction) {
+		public IMessageInterceptionCodeInjector codeInjectorFor(Instruction instruction) {
 			foreach (IMessageInterceptionCodeInjector codeInjector in this.availableInjectors)
 				if (codeInjector.isInterceptorFor(instruction))
 					return codeInjector;

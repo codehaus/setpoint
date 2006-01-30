@@ -1,100 +1,114 @@
-using PERWAPI;
+using System;
+using Mono.Cecil;
 
-namespace preWeaverPERWAPI.CodeInjection {
+namespace preWeaverCecil.CodeInjection {
 	/// <summary>
 	/// Summary description for SetPointAssemblyRef.
 	/// </summary>
 	public class SetPointAssemblyRef {
-		private AssemblyRef referencedAssembly;
-		private ClassRef _weaverTypeRef;
+		private AssemblyDefinition referencedAssembly;
+		private TypeDefinition _weaverTypeRef;
 
 		public SetPointAssemblyRef() {
-			this.referencedAssembly = PEFile.ReadExportedInterface("SetPoint.dll") as AssemblyRef;
-			_weaverTypeRef = this.referencedAssembly.GetClass("setPoint.weaving", "Weaver");			
+			openSetPointAssembly();
+			_weaverTypeRef = referencedAssembly.MainModule.Types["setPoint.weaving.Weaver"];
+		}
+
+		private void openSetPointAssembly() {
+			try {
+				referencedAssembly = AssemblyFactory.GetAssembly("SetPoint.dll");
+			} catch (Exception e) {
+				throw new Exception("Could not open SetPoint assembly: " + e.Message);
+			}
 		}
 
 		#region public properties		
 
-		private FieldRef _weaverReference;
+		private FieldReference _weaverReference;
 
-		internal FieldRef weaverReference {
+		public FieldReference weaverReference {
 			get {
 				if (_weaverReference == null)
-					_weaverReference = this._weaverTypeRef.GetField("instance");
+					_weaverReference = _weaverTypeRef.Fields.GetField("instance");
 				return _weaverReference;
 			}
 		}
 
-		private MethodRef _semanticatedAttributeConstructor;
+		private MethodReference _semanticatedAttributeConstructor;
 
-		internal MethodRef semanticatedAttributeConstructor {
+		public MethodReference semanticatedAttributeConstructor {
 			get {
 				if (_semanticatedAttributeConstructor == null)
-					_semanticatedAttributeConstructor = this.referencedAssembly.GetClass("SemanticatedAttribute").GetMethod(".ctor");
+					_semanticatedAttributeConstructor = getConstructorReference("setPoint.programAnnotation.SemanticatedAttribute");
 				return _semanticatedAttributeConstructor;
 			}
-		}		
-		
-		private MethodRef _constructorJoinPointConstructor;
+		}
 
-		internal MethodRef constructorJoinPointConstructor {
+		private MethodReference _constructorJoinPointConstructor;
+
+		public MethodReference constructorJoinPointConstructor {
 			get {
 				if (_constructorJoinPointConstructor == null)
-					_constructorJoinPointConstructor = this.referencedAssembly.GetClass("ConstructorJoinPoint").GetMethod(".ctor");
+					_constructorJoinPointConstructor = getConstructorReference("setPoint.messageReifying.ConstructorJoinPoint");
 				return _constructorJoinPointConstructor;
 			}
 		}
 
-		private MethodRef _methodCallJoinPointConstructor;
+		private MethodReference _methodCallJoinPointConstructor;
 
-		internal MethodRef methodCallJoinPointConstructor {
+		public MethodReference methodCallJoinPointConstructor {
 			get {
 				if (_methodCallJoinPointConstructor == null)
-					_methodCallJoinPointConstructor = this.referencedAssembly.GetClass("MethodCallJoinPoint").GetMethod(".ctor");
+					_methodCallJoinPointConstructor = getConstructorReference("setPoint.messageReifying.MethodCallJoinPoint");
 				return _methodCallJoinPointConstructor;
 			}
 		}
 
-		private MethodRef _instanceIObjectConstructor;
+		private MethodReference _instanceIObjectConstructor;
 
-		internal MethodRef instanceIObjectConstructor {
+		public MethodReference instanceIObjectConstructor {
 			get {
 				if (_instanceIObjectConstructor == null)
-					_instanceIObjectConstructor = this.referencedAssembly.GetClass("setPoint.messageReifying", "Instance").GetMethod(".ctor");
+					_instanceIObjectConstructor = getConstructorReference("setPoint.messageReifying.Instance");
 				return _instanceIObjectConstructor;
 			}
 		}
 
-		private MethodRef _classIObjectConstructor;
+		private MethodReference _classIObjectConstructor;
 
-		internal MethodRef classIObjectConstructor {
+		public MethodReference classIObjectConstructor {
 			get {
 				if (_classIObjectConstructor == null)
-					_classIObjectConstructor = this.referencedAssembly.GetClass("setPoint.messageReifying","Class").GetMethod(".ctor");
+					_classIObjectConstructor = getConstructorReference("setPoint.messageReifying.Class");
 				return _classIObjectConstructor;
 			}
 		}
 
-		private MethodRef _methodIMessageConstructor;
+		private MethodReference _methodIMessageConstructor;
 
-		internal MethodRef methodIMessageConstructor {
+		public MethodReference methodIMessageConstructor {
 			get {
 				if (_methodIMessageConstructor == null)
-					_methodIMessageConstructor = this.referencedAssembly.GetClass("setPoint.messageReifying","Method").GetMethod(".ctor");
+					_methodIMessageConstructor = getConstructorReference("setPoint.messageReifying.Method");
 				return _methodIMessageConstructor;
 			}
 		}
 
-		private MethodRef _weavingMethod;
+		private MethodReference _weavingMethod;
 
-		internal MethodRef weavingMethod {
+		public MethodReference weavingMethod {
 			get {
 				if (_weavingMethod == null)
-					_weavingMethod = this._weaverTypeRef.GetMethod("weave");
+					_weavingMethod = _weaverTypeRef.Methods.GetMethod("weave")[0];
 				return _weavingMethod;
 			}
-		}		
+		}
 
-		#endregion		
+		#endregion
+
+		private MethodDefinition getConstructorReference(string typeFullName) {
+			return referencedAssembly.MainModule.Types[typeFullName].Constructors[0];
+		}
+
 	}
 }

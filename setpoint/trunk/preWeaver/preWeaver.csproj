@@ -70,9 +70,9 @@
                     HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.dll"
                 />
                 <Reference
-                    Name = "PERWAPI"
-                    AssemblyName = "PERWAPI"
-                    HintPath = "..\lib\PERWAPI.dll"
+                    Name = "Mono.Cecil"
+                    AssemblyName = "Mono.Cecil"
+                    HintPath = "..\lib\Mono.Cecil.dll"
                 />
             </References>
         </Build>
@@ -144,6 +144,26 @@
                 />
                 <File
                     RelPath = "CodeInjection\SetPointAssemblyRef.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "CodeInjection\Il\BranchEnlarger.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "CodeInjection\Il\CallInstruction.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "CodeInjection\Il\MethodCodeBuilder.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "CodeInjection\Il\PrimitiveTypeLoadOpCodeChooser.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />
