@@ -6,7 +6,7 @@ using preWeaverCecil;
 using semanticator;
 
 namespace SetPointTask {
-		[TaskName("simAddin")]
+		[TaskName("setPoint")]
 		public class SimAddinTask : Task {
 			String inputFile;
 			String outputFile;
